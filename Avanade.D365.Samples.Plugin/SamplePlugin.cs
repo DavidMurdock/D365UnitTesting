@@ -21,6 +21,7 @@ namespace Avanade.D365.Samples.Plugin
         /// </remarks>
         public void Execute(IServiceProvider serviceProvider)
         {
+                        
             //Extract the tracing service for use in debugging sandboxed plug-ins.
             ITracingService tracingService =
                 (ITracingService)serviceProvider.GetService(typeof(ITracingService));
@@ -28,6 +29,10 @@ namespace Avanade.D365.Samples.Plugin
             // Obtain the execution context from the service provider.
             IPluginExecutionContext context = (IPluginExecutionContext)
                 serviceProvider.GetService(typeof(IPluginExecutionContext));
+
+            //Ensure this plugin in running in the Pre Event stage of the Execution Pipeline
+            if (context.Stage != 20)
+                return;
 
             // The InputParameters collection contains all the data passed in the message request. For Plugins Registered to Delete Messages, Type will be 'EntityReference' NOT 'Entity'
             if (context.InputParameters.Contains("Target") &&
@@ -38,7 +43,7 @@ namespace Avanade.D365.Samples.Plugin
 
                 // Verify that the target entity represents your target entity type.
                 // If not, this plug-in was not registered correctly.
-                if (entity.LogicalName != "") //i.e. "account"
+                if (entity.LogicalName != "account") //i.e. "account"
                     return;
 
                 try
@@ -55,6 +60,21 @@ namespace Avanade.D365.Samples.Plugin
                     // Do Something in Microsoft Dynamics CRM.
                     tracingService.Trace("SamplePlugin: Doing Something.");
 
+                    //Switch on Passed in Message Name
+
+                    switch (context.MessageName.ToLower())
+                    {
+                        case "create":
+                            //Update the Description to be the Name and the User ID
+                            UpdateEntityDescription(entity, context.UserId);
+                            break;
+                        case "update":
+                            //Do Nothing
+                            break;
+                        default:
+                            break;
+                    }                   
+
                 }
                 catch (FaultException<OrganizationServiceFault> ex)
                 {
@@ -63,9 +83,18 @@ namespace Avanade.D365.Samples.Plugin
 
                 catch (Exception ex)
                 {
-                    tracingService.Trace("SamplePlugin: {0}", ex.ToString());
+                    tracingService.Trace("SamplePlugin: Exception Message {0}", ex.ToString());
                     throw;
                 }
+            }
+        }
+
+        private void UpdateEntityDescription(Entity entity, Guid userId)
+        {
+            //If this occurs in a Pre-Event Plugin Step, you can directly update / add attributes and their values to the context entity
+            if (entity.Attributes.Contains("name"))
+            {
+                entity.Attributes["description"] = string.Format("Account: {0} - Created by User Id: {1}", entity.Attributes["name"], userId.ToString());
             }
         }
     }

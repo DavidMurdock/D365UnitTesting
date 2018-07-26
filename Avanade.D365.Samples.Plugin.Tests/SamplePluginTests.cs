@@ -18,6 +18,8 @@ namespace Avanade.D365.Samples.Plugin.Tests
 
         #region Constants
 
+        string testAccountName = "Test Account Name";
+
         #endregion
 
         [TestMethod]
@@ -60,6 +62,9 @@ namespace Avanade.D365.Samples.Plugin.Tests
             Entity targetEntity = new Entity("account");
             targetEntity.LogicalName = "account";
 
+            //Add a Name Value to the Account Attributes.
+            targetEntity.Attributes["name"] = testAccountName;
+
             //userid to be used inside the plug-in
             Guid userId = Guid.NewGuid();
 
@@ -77,6 +82,8 @@ namespace Avanade.D365.Samples.Plugin.Tests
             pluginContextMock.Setup(t => t.OutputParameters).Returns(outputParameters);
             pluginContextMock.Setup(t => t.UserId).Returns(userId);
             pluginContextMock.Setup(t => t.PrimaryEntityName).Returns("account");
+            pluginContextMock.Setup(t => t.MessageName).Returns("Create");
+            pluginContextMock.Setup(t => t.Stage).Returns(20);
             var pluginContext = pluginContextMock.Object;
 
             //set up a serviceprovidermock
@@ -91,6 +98,12 @@ namespace Avanade.D365.Samples.Plugin.Tests
             SamplePlugin samplePlugin = new SamplePlugin();
             samplePlugin.Execute(serviceProvider);
 
+            string testAccountDescription = string.Format("Account: {0} - Created by User Id: {1}", testAccountName, userId.ToString());
+
+            if (targetEntity.Attributes.Contains("description"))
+                Assert.AreEqual(testAccountDescription, (string)targetEntity.Attributes["description"]);
+            else
+                Assert.Fail("Account Description Updated Incorrectly");
 
             #region Clean Up
             {
