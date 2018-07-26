@@ -97,7 +97,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>"$(ProjectDir)bin\CoreTools\CrmSvcUtil.exe"
-call "$(ProjectDir)bin\CoreTools\CrmSvcUtil.bat"</PostBuildEvent>
+    <PostBuildEvent>REM "$(ProjectDir)bin\CoreTools\CrmSvcUtil.exe"
+REM call "$(ProjectDir)bin\CoreTools\CrmSvcUtil.bat"</PostBuildEvent>
   </PropertyGroup>
 </Project>
